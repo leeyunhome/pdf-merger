@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger Pro | 프리미엄 PDF 병합</title>
+    <meta name="description" content="여러 개의 PDF 파일을 하나로 쉽고 안전하게 병합하세요. 모든 처리는 브라우저에서 이루어집니다.">
+    <link rel="stylesheet" href="style.css">
+    <!-- pdf-lib library -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Merger Pro</h1>
+            <p>여러 개의 PDF 파일을 하나의 문서로 완벽하게 합치세요.</p>
+        </header>
+
+        <main class="main-card">
+            <div class="upload-zone" id="drop-zone">
+                <input type="file" id="file-input" multiple accept="application/pdf">
+                <span class="upload-icon">📄</span>
+                <p>파일을 이리로 드래그하거나 <span>클릭하여 업로드</span>하세요</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">PDF 파일만 지원합니다</p>
+            </div>
+
+            <div class="file-list" id="file-list">
+                <!-- 파일 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <div class="action-bar" id="action-bar" style="display: none;">
+                <button class="btn btn-secondary" id="btn-clear">모두 삭제</button>
+                <button class="btn btn-primary" id="btn-merge">
+                    <span class="loader"></span>
+                    <span class="btn-text">PDF 병합 및 저장</span>
+                </button>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 PDF Merger Pro. All rights reserved. 브라우저에서 안전하게 실행됩니다.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

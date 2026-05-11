@@ -90,6 +90,7 @@ h1 {
     font-weight: 700;
     background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
     letter-spacing: -1px;
@@ -146,6 +147,197 @@ header p {
 #merge-file-input,
 #split-file-input {
     display: none;
+}
+
+/* Page thumbnail grid */
+.page-grid-wrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 1rem;
+    background: var(--glass);
+    margin-bottom: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
+}
+
+.page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+}
+
+.page-thumb {
+    position: relative;
+    border: 2px solid var(--glass-border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.18s;
+}
+
+.page-thumb canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.page-thumb:hover {
+    border-color: var(--primary);
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.page-thumb.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+.thumb-check {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.18s;
+    pointer-events: none;
+}
+
+.page-thumb.selected .thumb-check {
+    opacity: 1;
+}
+
+.thumb-num {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.thumb-group-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: var(--secondary);
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.thumb-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    padding: 2.5rem;
+    grid-column: 1 / -1;
+    font-size: 0.95rem;
+}
+
+/* Selection bar */
+.selection-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.selection-count {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+
+.btn-accent {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+}
+
+.btn-accent:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Split groups */
+.split-groups {
+    margin-bottom: 1rem;
+}
+
+.groups-title {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.group-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.5rem;
+    animation: slideIn 0.2s ease-out;
+}
+
+.group-num {
+    font-weight: 600;
+    color: var(--secondary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    min-width: 60px;
+}
+
+.group-pages {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.split-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    gap: 1rem;
 }
 
 /* Split panel */

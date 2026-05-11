@@ -150,11 +150,20 @@ async function loadSplitFile(file) {
             canvas.height = viewport.height;
             await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
+            const checkEl = document.createElement('div');
+            checkEl.className = 'thumb-check';
+            checkEl.textContent = '✓';
+
+            const numEl = document.createElement('span');
+            numEl.className = 'thumb-num';
+            numEl.textContent = i;
+
             const thumb = document.createElement('div');
             thumb.className = 'page-thumb';
             thumb.dataset.page = i;
             thumb.appendChild(canvas);
-            thumb.innerHTML += `<div class="thumb-check">✓</div><span class="thumb-num">${i}</span>`;
+            thumb.appendChild(checkEl);
+            thumb.appendChild(numEl);
             thumb.addEventListener('click', () => togglePage(i));
             pageGrid.appendChild(thumb);
         }

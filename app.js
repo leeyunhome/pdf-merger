@@ -36,8 +36,36 @@ mergeFileInput.addEventListener('change', e => {
 
 function handleMergeFiles(files) {
     if (!files.length) return;
-    files.forEach(file => uploadedFiles.push({ id: Math.random().toString(36).slice(2, 11), file, name: file.name, size: formatBytes(file.size) }));
+    files.forEach(file => {
+        const fileObj = { id: Math.random().toString(36).slice(2, 11), file, name: file.name, size: formatBytes(file.size), thumbnailUrl: null, pageCount: null };
+        uploadedFiles.push(fileObj);
+        renderMergeThumbnail(fileObj);
+    });
     renderMergeList();
+}
+
+async function renderMergeThumbnail(fileObj) {
+    try {
+        const arrayBuffer = await fileObj.file.arrayBuffer();
+        const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        fileObj.pageCount = pdfDoc.numPages;
+        const page = await pdfDoc.getPage(1);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = 64 / baseViewport.width;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        fileObj.thumbnailUrl = canvas.toDataURL();
+
+        const thumbEl = document.querySelector(`.file-item[data-id="${fileObj.id}"] .merge-thumb`);
+        if (thumbEl) {
+            thumbEl.innerHTML = `<img src="${fileObj.thumbnailUrl}" style="width:100%;height:auto;display:block;">`;
+        }
+        const infoEl = document.querySelector(`.file-item[data-id="${fileObj.id}"] .file-size`);
+        if (infoEl) infoEl.textContent = `${fileObj.size} · ${fileObj.pageCount}페이지`;
+    } catch (_) { /* 썸네일 실패 시 기본 아이콘 유지 */ }
 }
 
 function renderMergeList() {
@@ -47,17 +75,32 @@ function renderMergeList() {
     uploadedFiles.forEach((fileObj, index) => {
         const item = document.createElement('div');
         item.className = 'file-item';
-        item.innerHTML = `
-            <span class="file-icon">📄</span>
-            <div class="file-info">
-                <span class="file-name">${fileObj.name}</span>
-                <span class="file-size">${fileObj.size}</span>
-            </div>
-            <div class="file-actions">
-                <button class="btn-icon" onclick="moveFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
-                <button class="btn-icon" onclick="moveFile(${index}, 1)" ${index === uploadedFiles.length - 1 ? 'disabled' : ''}>↓</button>
-                <button class="btn-icon btn-remove" onclick="removeFile('${fileObj.id}')">✕</button>
-            </div>`;
+        item.dataset.id = fileObj.id;
+
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'merge-thumb';
+        if (fileObj.thumbnailUrl) {
+            thumbDiv.innerHTML = `<img src="${fileObj.thumbnailUrl}" style="width:100%;height:auto;display:block;">`;
+        } else {
+            thumbDiv.textContent = '📄';
+        }
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'file-info';
+        infoDiv.innerHTML = `
+            <span class="file-name">${fileObj.name}</span>
+            <span class="file-size">${fileObj.size}${fileObj.pageCount ? ` · ${fileObj.pageCount}페이지` : ''}</span>`;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'file-actions';
+        actionsDiv.innerHTML = `
+            <button class="btn-icon" onclick="moveFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button class="btn-icon" onclick="moveFile(${index}, 1)" ${index === uploadedFiles.length - 1 ? 'disabled' : ''}>↓</button>
+            <button class="btn-icon btn-remove" onclick="removeFile('${fileObj.id}')">✕</button>`;
+
+        item.appendChild(thumbDiv);
+        item.appendChild(infoDiv);
+        item.appendChild(actionsDiv);
         mergeFileList.appendChild(item);
     });
 }

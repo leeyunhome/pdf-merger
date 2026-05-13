@@ -37,71 +37,113 @@ mergeFileInput.addEventListener('change', e => {
 function handleMergeFiles(files) {
     if (!files.length) return;
     files.forEach(file => {
-        const fileObj = { id: Math.random().toString(36).slice(2, 11), file, name: file.name, size: formatBytes(file.size), thumbnailUrl: null, pageCount: null };
+        const fileObj = { id: Math.random().toString(36).slice(2, 11), file, name: file.name, size: formatBytes(file.size), pageCount: null, thumbnails: [] };
         uploadedFiles.push(fileObj);
-        renderMergeThumbnail(fileObj);
+        renderMergeThumbnails(fileObj);
     });
     renderMergeList();
 }
 
-async function renderMergeThumbnail(fileObj) {
+async function renderMergeThumbnails(fileObj) {
     try {
         const arrayBuffer = await fileObj.file.arrayBuffer();
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         fileObj.pageCount = pdfDoc.numPages;
-        const page = await pdfDoc.getPage(1);
-        const baseViewport = page.getViewport({ scale: 1 });
-        const scale = 64 / baseViewport.width;
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        fileObj.thumbnailUrl = canvas.toDataURL();
 
-        const thumbEl = document.querySelector(`.file-item[data-id="${fileObj.id}"] .merge-thumb`);
-        if (thumbEl) {
-            thumbEl.innerHTML = `<img src="${fileObj.thumbnailUrl}" style="width:100%;height:auto;display:block;">`;
+        const metaEl = document.querySelector(`.merge-card[data-id="${fileObj.id}"] .merge-card-meta`);
+        if (metaEl) metaEl.textContent = `${fileObj.size} · ${fileObj.pageCount}페이지`;
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const base = page.getViewport({ scale: 1 });
+            const viewport = page.getViewport({ scale: 88 / base.width });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            fileObj.thumbnails[i - 1] = canvas.toDataURL();
+
+            const strip = document.querySelector(`.merge-card[data-id="${fileObj.id}"] .merge-thumb-strip`);
+            if (strip) {
+                const placeholder = strip.querySelector('.merge-thumb-placeholder');
+                if (placeholder) placeholder.remove();
+
+                const thumb = document.createElement('div');
+                thumb.className = 'merge-page-thumb';
+                const img = document.createElement('img');
+                img.src = fileObj.thumbnails[i - 1];
+                const numEl = document.createElement('span');
+                numEl.className = 'merge-thumb-num';
+                numEl.textContent = i;
+                thumb.appendChild(img);
+                thumb.appendChild(numEl);
+                strip.appendChild(thumb);
+            }
         }
-        const infoEl = document.querySelector(`.file-item[data-id="${fileObj.id}"] .file-size`);
-        if (infoEl) infoEl.textContent = `${fileObj.size} · ${fileObj.pageCount}페이지`;
-    } catch (_) { /* 썸네일 실패 시 기본 아이콘 유지 */ }
+    } catch (_) { /* 썸네일 실패 시 무시 */ }
 }
 
 function renderMergeList() {
     mergeFileList.innerHTML = '';
     if (!uploadedFiles.length) { mergeActionBar.style.display = 'none'; return; }
     mergeActionBar.style.display = 'flex';
-    uploadedFiles.forEach((fileObj, index) => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.dataset.id = fileObj.id;
 
-        const thumbDiv = document.createElement('div');
-        thumbDiv.className = 'merge-thumb';
-        if (fileObj.thumbnailUrl) {
-            thumbDiv.innerHTML = `<img src="${fileObj.thumbnailUrl}" style="width:100%;height:auto;display:block;">`;
+    uploadedFiles.forEach((fileObj, index) => {
+        const card = document.createElement('div');
+        card.className = 'merge-card';
+        card.dataset.id = fileObj.id;
+
+        const header = document.createElement('div');
+        header.className = 'merge-card-header';
+
+        const leftActions = document.createElement('div');
+        leftActions.className = 'merge-card-left';
+        leftActions.innerHTML = `
+            <button class="btn-icon" onclick="moveFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button class="btn-icon" onclick="moveFile(${index}, 1)" ${index === uploadedFiles.length - 1 ? 'disabled' : ''}>↓</button>`;
+
+        const info = document.createElement('div');
+        info.className = 'merge-card-info';
+        info.innerHTML = `
+            <span class="merge-card-name">${fileObj.name}</span>
+            <span class="merge-card-meta">${fileObj.size}${fileObj.pageCount ? ` · ${fileObj.pageCount}페이지` : ''}</span>`;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-icon btn-remove';
+        removeBtn.textContent = '✕';
+        removeBtn.setAttribute('onclick', `removeFile('${fileObj.id}')`);
+
+        header.appendChild(leftActions);
+        header.appendChild(info);
+        header.appendChild(removeBtn);
+
+        const strip = document.createElement('div');
+        strip.className = 'merge-thumb-strip';
+
+        if (fileObj.thumbnails.length > 0) {
+            fileObj.thumbnails.forEach((url, i) => {
+                if (!url) return;
+                const thumb = document.createElement('div');
+                thumb.className = 'merge-page-thumb';
+                const img = document.createElement('img');
+                img.src = url;
+                const numEl = document.createElement('span');
+                numEl.className = 'merge-thumb-num';
+                numEl.textContent = i + 1;
+                thumb.appendChild(img);
+                thumb.appendChild(numEl);
+                strip.appendChild(thumb);
+            });
         } else {
-            thumbDiv.textContent = '📄';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'merge-thumb-placeholder';
+            placeholder.innerHTML = `<span class="loader" style="display:inline-block;width:16px;height:16px;border-width:2px;border-color:rgba(255,255,255,0.2);border-top-color:var(--primary);"></span> 미리보기 생성 중...`;
+            strip.appendChild(placeholder);
         }
 
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'file-info';
-        infoDiv.innerHTML = `
-            <span class="file-name">${fileObj.name}</span>
-            <span class="file-size">${fileObj.size}${fileObj.pageCount ? ` · ${fileObj.pageCount}페이지` : ''}</span>`;
-
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'file-actions';
-        actionsDiv.innerHTML = `
-            <button class="btn-icon" onclick="moveFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
-            <button class="btn-icon" onclick="moveFile(${index}, 1)" ${index === uploadedFiles.length - 1 ? 'disabled' : ''}>↓</button>
-            <button class="btn-icon btn-remove" onclick="removeFile('${fileObj.id}')">✕</button>`;
-
-        item.appendChild(thumbDiv);
-        item.appendChild(infoDiv);
-        item.appendChild(actionsDiv);
-        mergeFileList.appendChild(item);
+        card.appendChild(header);
+        card.appendChild(strip);
+        mergeFileList.appendChild(card);
     });
 }
 
